@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en-gb" dir="ltr">
+
+<head>
+  <title>Token Rewards Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="description" content="Token Rewards calculator for BSC tokens." />
+  <!-- Facebook -->
+  <meta property="og:url" content="https://tokenrewards.com">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="tokenrewards.com | EverTokens Reward Tracker">
+  <meta property="og:description"
+    content="Rewards calculator for BSC tokens. See how many rewards you have earned from reflections.">
+  <meta property="og:image" content="https://tokenrewards.com/logo.png
+">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="twitter:domain" content="tokenrewards.com">
+  <meta property="twitter:url" content="https://tokenrewards.com/">
+  <meta name="twitter:title" content="TokenRewards.com | Reward Tracker">
+  <meta name="twitter:description"
+    content="Rewards calculator for BSC Tokens. See how much rewards you have earned from reflection!">
+  <meta name="twitter:image" content="https://tokenrewards.com/logo.png">
+  <link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
+  <link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" />
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css"
+    href="https://fonts.googleapis.com/css?display=swap&amp;family=Lato:300,400|Montserrat:300,400,300,400,300,400,300,400|Roboto:300,400&amp;subset=latin"
+    media="all">
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@3.0.0/dist/web3.min.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <rewarder />
+  </div>
+  <script type="text/x-template" id="token-rewarder">
+    <div class="checkout">
+      <div class="credit-card-box" v-if="contractLogoUrl">
+        <div class="flip">
+          <div class="front">
+            <div class="chip"></div>
+            <div class="logo">
+              <img :src="contractLogoUrl" width="64" height="64" v-if="contractLogoUrl" /> 
+            </div>
+            <div class="number" v-html="tokenName"></div>
+            <div class="card-holder">
+              <label>Symbol</label>
+              <div v-html="tokenSymbol"></div>
+            </div>
+            <div class="card-expiration-date">
+              <label>Decimal</label>
+              <div v-html="tokenDecimal"></div>
+            </div>
+          </div>
+          <div class="back">
+            <div class="strip"></div>
+            <div class="logo">
+              <img :src="contractLogoUrl" width="64" height="64" v-if="contractLogoUrl" /> 
+            </div>
+            <div class="ccv">
+              <label>CONTRACT ADDRESS</label>
+              <div v-html="tokenContractAddress"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form">
+        <fieldset>
+          <label for="contract-address">Contract Address</label>
+          <input type="text" id="contract-address" v-model="contractAddress" />
+        </fieldset>
+        <fieldset>
+          <label for="wallet-address">Wallet Address</label>
+          <input type="text" id="wallet-address" v-model="walletAddress" />
+        </fieldset>
+        <fieldset>
+          <label for="tokens-totals">Token Totals</label>
+          <button class="btn" type="button" disabled v-html="tokenTotals" />
+        </fieldset>
+        <fieldset>
+          <label for="tokens-purchased">Tokens Purchased</label>
+          <button class="btn" type="button" disabled v-html="tokensPurchased" />
+        </fieldset>
+        <fieldset>
+          <label for="tokens-sold">Tokens Sold</label>
+          <button class="btn" type="button" disabled v-html="tokensSold" />
+        </fieldset>
+        <fieldset>
+          <label for="tokens-distributed">Tokens Distributed</label>
+          <button class="btn" type="button" disabled v-html="tokensDistributed" />
+        </fieldset>
+        <button class="btn" @click="calculateTotals"><i class="fa fa-lock"></i> Submit</button>
+      </div>
+    </div>
+  </script>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://unpkg.com/vue@next"></script>
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+<script>
+  const web3 = new Web3(Web3.givenProvider || "ws://localhost:8545");
+  const { createApp } = Vue;
+  const app = createApp({});
+  app.component('rewarder', {
+    template: '#token-rewarder',
+    data() {
+        return {
+            contractAddress: '',
+            walletAddress: '',
+            tokenName: '',
+            tokenSymbol: '',
+            tokenTotals: '',
+            tokensPurchased: '',
+            tokensSold: '',
+            tokensDistributed: '',
+            parameters: {
+                bscScan: {
+                    apiKey: "A5U36AGR9X94AMSD3CW8EWU4XBH5B59PJT",
+                    baseUrl: "https://api.bscscan.com/api?"
+                }
+            }
+        }
+    },
+    methods: {
+        async getTransactions() {
+            const wAddressLC = this.walletAddress.toLowerCase();
+            const wContractLC = this.contractAddress.toLowerCase();
+            return await axios.get(this.parameters.bscScan.baseUrl, {
+                params: {
+                    module: "account",
+                    action: "tokentx",
+                    address: wAddressLC,
+                    apikey: this.parameters.bscScan.apiKey,
+                    startblock: 0,
+                    endblock: 99999999999999,
+                    sort: "desc",
+                    contractaddress: wContractLC
+                }
+            })
+            .then((response) => {
+                const result = response.data.result;
+                console.log(result[0]);
+                const tokenName = result[0].tokenName;
+                const tokenSymbol = result[0].tokenSymbol;
+                const tokenDecimal = result[0].tokenDecimal;
+                const tokenContractAddress = web3.utils.toChecksumAddress(this.contractAddress);
+                this.contractLogoUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/${tokenContractAddress}/logo.png?raw=true`;
+                
+                const tokenIn = result.filter(x => { return x.to == wAddressLC })
+                    .reduce((total, x) => {
+                        return total + Number(x.value);
+                    }, 0);
+
+                const tokenOut = result.filter(x => { return x.from == wAddressLC })
+                    .reduce((total, x) => {
+                        return total + Number(x.value);
+                    }, 0);
+
+                return {
+                    "tokenName": tokenName,
+                    "tokenSymbol": tokenSymbol,
+                    "tokenDecimal": tokenDecimal,
+                    "tokenContractAddress": tokenContractAddress,
+                    "tokenIn": tokenIn,
+                    "tokenOut": tokenOut
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+        },
+        async getTotals() {
+            return await axios.get(this.parameters.bscScan.baseUrl, {
+                params: {
+                    module: "account",
+                    action: "tokenbalance",
+                    address: this.walletAddress,
+                    tag: "latest",
+                    contractaddress: this.contractAddress,
+                    apikey: this.parameters.bscScan.apiKey,
+                    tokenPriceUSD: "tokenPriceUSD"
+                }
+            })
+            .then((response) => {
+                return response.data.result / 1000000000;
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+        },
+        async getTokenPrice() {
+            return await axios.get(`https://bsc.api.0x.org/swap/v1/price?sellToken=${this.contractAddress}&buyToken=BUSD&sellAmount=1000000000000000000`)
+                .then((response) => {
+                    return response.data.price;
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        },
+        formatWalletTotals(_walletTransactions, _walletTotal, _tokenPrice) {
+            const dTotal = _walletTotal - (_walletTransactions.tokenIn / 1000000000 - _walletTransactions.tokenOut / 1000000000);
+            const profit = dTotal * _tokenPrice;
+
+            this.tokenTotals = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTotal);
+            this.tokensPurchased = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.tokenIn / 1000000000);
+            this.tokensSold = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.tokenOut / 1000000000);
+            this.tokensDistributed = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(dTotal)
+                + ", which is "
+                + Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(profit)
+                + " at the current market price.";
+            this.tokenName = _walletTransactions.tokenName;
+            this.tokenSymbol = _walletTransactions.tokenSymbol;
+            this.tokenDecimal = _walletTransactions.tokenDecimal;
+            this.tokenContractAddress = this.contractAddress;
+        },
+        async calculateTotals() {
+            this.tokenTotals = 'Loading...';
+            this.tokensPurchased = 'Loading...';
+            this.tokensSold = 'Loading...';
+            this.tokensDistributed = 'Loading...';
+
+            const price = await this.getTokenPrice();
+            const transactions = await this.getTransactions();
+            const totals = await this.getTotals();
+
+            this.formatWalletTotals(transactions, totals, price);
+        }
+      }
+    });
+    app.mount('#app')
+</script>
+<script src="./dist/bundle.js"></script>
+</body>
+
+</html>
