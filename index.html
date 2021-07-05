@@ -127,35 +127,35 @@
     },
     methods: {
         async getTransactions() {
-            const wAddressLC = this.walletAddress.toLowerCase();
-            const wContractLC = this.contractAddress.toLowerCase();
+            const walletAddress = this.walletAddress.toLowerCase();
+            const contractAddress = this.contractAddress.toLowerCase();
             return await axios.get(this.parameters.bscScan.baseUrl, {
                 params: {
                     module: "account",
                     action: "tokentx",
-                    address: wAddressLC,
+                    address: walletAddress,
                     apikey: this.parameters.bscScan.apiKey,
                     startblock: 0,
                     endblock: 99999999999999,
                     sort: "desc",
-                    contractaddress: wContractLC
+                    contractaddress: contractAddress
                 }
             })
             .then((response) => {
                 const result = response.data.result;
-                console.log(result[0]);
+                console.log(result);
                 const tokenName = result[0].tokenName;
                 const tokenSymbol = result[0].tokenSymbol;
                 const tokenDecimal = result[0].tokenDecimal;
                 const tokenContractAddress = web3.utils.toChecksumAddress(this.contractAddress);
                 this.contractLogoUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/${tokenContractAddress}/logo.png?raw=true`;
                 
-                const tokenIn = result.filter(x => { return x.to == wAddressLC })
+                const toWallet = result.filter(x => { return x.to == walletAddress })
                     .reduce((total, x) => {
                         return total + Number(x.value);
                     }, 0);
 
-                const tokenOut = result.filter(x => { return x.from == wAddressLC })
+                const fromWallet = result.filter(x => { return x.from == walletAddress })
                     .reduce((total, x) => {
                         return total + Number(x.value);
                     }, 0);
@@ -165,8 +165,8 @@
                     "tokenSymbol": tokenSymbol,
                     "tokenDecimal": tokenDecimal,
                     "tokenContractAddress": tokenContractAddress,
-                    "tokenIn": tokenIn,
-                    "tokenOut": tokenOut
+                    "toWallet": toWallet,
+                    "fromWallet": fromWallet
                 }
             })
             .catch((error) => {
@@ -202,16 +202,13 @@
                 });
         },
         formatWalletTotals(_walletTransactions, _walletTotal, _tokenPrice) {
-            const dTotal = _walletTotal - (_walletTransactions.tokenIn / 1000000000 - _walletTransactions.tokenOut / 1000000000);
-            const profit = dTotal * _tokenPrice;
+            const total = _walletTotal - (_walletTransactions.toWallet / 1000000000 - _walletTransactions.fromWallet / 1000000000);
+            const distributed = total * _tokenPrice;
 
             this.tokenTotals = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTotal);
-            this.tokensPurchased = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.tokenIn / 1000000000);
-            this.tokensSold = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.tokenOut / 1000000000);
-            this.tokensDistributed = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(dTotal)
-                + ", which is "
-                + Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(profit)
-                + " at the current market price.";
+            this.tokensPurchased = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.toWallet / 1000000000);
+            this.tokensSold = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.fromWallet / 1000000000);
+            this.tokensDistributed = `${Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(total)}, which is ${Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(distributed)}" at the current market price.`;
             this.tokenName = _walletTransactions.tokenName;
             this.tokenSymbol = _walletTransactions.tokenSymbol;
             this.tokenDecimal = _walletTransactions.tokenDecimal;
