@@ -159,7 +159,7 @@ Form
 Checkout
 --------------------*/
 .checkout {
-  margin: 150px auto 30px;
+  margin: 150px auto 30px auto;
   position: relative;
   width: 420px;
   background: white;
@@ -171,8 +171,9 @@ Checkout
 /*--------------------
 Donation
 --------------------*/
+
 .donation {
-  margin: 30px auto 30px;
+  margin: 30px auto 30px auto;
   position: relative;
   width: 420px;
   background: white;
