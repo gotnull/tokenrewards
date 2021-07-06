@@ -209,6 +209,7 @@
             this.tokensPurchased = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.toWallet / 1000000000);
             this.tokensSold = Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(_walletTransactions.fromWallet / 1000000000);
             this.tokensDistributed = `${Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(total)}, which is ${Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(distributed)} at the current market price.`;
+            
             this.tokenName = _walletTransactions.tokenName;
             this.tokenSymbol = _walletTransactions.tokenSymbol;
             this.tokenDecimal = _walletTransactions.tokenDecimal;
