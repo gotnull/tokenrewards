@@ -201,6 +201,9 @@
                     console.log(error);
                 });
         },
+        currencyFormat(str) {
+          return Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(str);
+        },
         numberFormat(str) {
           return Intl.NumberFormat('en-US', { maximumFractionDigits: 3, notation: "compact", compactDisplay: "long" }).format(str);
         },
@@ -211,7 +214,7 @@
             this.tokenTotals = this.numberFormat(_walletTotal);
             this.tokensPurchased = this.numberFormat(_walletTransactions.toWallet / 1000000000);
             this.tokensSold = this.numberFormat(_walletTransactions.fromWallet / 1000000000);
-            this.tokensDistributed = `${this.numberFormat(total)}, which is ${Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(distributed)} at the current market price.`;
+            this.tokensDistributed = `${this.numberFormat(total)}, which is ${this.currencyFormat(distributed)} at the current market price.`;
             
             this.tokenName = _walletTransactions.tokenName;
             this.tokenSymbol = _walletTransactions.tokenSymbol;
