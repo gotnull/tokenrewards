@@ -215,10 +215,10 @@
             this.tokenContractAddress = this.contractAddress;
         },
         async calculateTotals() {
-            this.tokenTotals = 'Loading...';
-            this.tokensPurchased = 'Loading...';
-            this.tokensSold = 'Loading...';
-            this.tokensDistributed = 'Loading...';
+            this.tokenTotals = 'Please Wait...';
+            this.tokensPurchased = 'Please Wait...';
+            this.tokensSold = 'Please Wait...';
+            this.tokensDistributed = 'Please Wait...';
 
             const price = await this.getTokenPrice();
             const transactions = await this.getTransactions();
